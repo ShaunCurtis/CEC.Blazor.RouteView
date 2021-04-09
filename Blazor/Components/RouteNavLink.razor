@@ -1,0 +1,37 @@
+﻿@*/// =================================
+    /// Author: Shaun Curtis, Cold Elm Coders
+    /// License: MIT
+    /// ==================================*@
+
+@namespace Blazor.Components
+
+@inherits NavLink
+
+<a class="@this.CssClass" @attributes="this.AdditionalAttributes" @onclick="this.OnClick">
+    @this.ChildContent
+</a>
+
+@code {
+
+    [Parameter] public string RouteURL { get; set; }
+
+    [Parameter] public ViewData ViewData { get; set; }
+
+    [Parameter] public Type View { get; set; }
+
+    [Parameter] public bool ForceLoad { get; set; }
+
+    [Inject] NavigationManager NavManager { get; set; }
+
+    [CascadingParameter] RouteViewManager RouteViewManager { get; set; }
+
+    private void OnClick(MouseEventArgs e)
+    {
+        if (this.ViewData != null && this.RouteViewManager != null)
+            this.RouteViewManager.LoadViewAsync(this.ViewData);
+        else if (this.View != null && this.RouteViewManager != null)
+            this.RouteViewManager.LoadViewAsync(this.View);
+        else if (!string.IsNullOrWhiteSpace(this.RouteURL))
+            this.NavManager.NavigateTo(this.RouteURL, this.ForceLoad);
+    }
+}

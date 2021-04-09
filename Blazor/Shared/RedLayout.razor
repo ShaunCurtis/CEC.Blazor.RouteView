@@ -1,0 +1,47 @@
+﻿@inherits LayoutComponentBase
+
+<div class="page">
+    <div class="@_sidebarCss">
+        <NavMenu SiteTitle="Blazor Red" />
+    </div>
+
+    <div class="main">
+        <div class="top-row px-4">
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <RouteNavLink class="nav-link cursor-hand" View="typeof(Blazor.Pages.Index)">Home</RouteNavLink>
+                </li>
+                <li class="nav-item">
+                    <RouteNavLink class="nav-link cursor-hand" View="typeof(Blazor.Pages.Counter)">Counter</RouteNavLink>
+                </li>
+                <li class="nav-item">
+                    <RouteNavLink class="nav-link cursor-hand" View="typeof(Blazor.Pages.BasicFetchData)">Basic FetchData</RouteNavLink>
+                </li>
+                <li class="nav-item">
+                    <RouteNavLink class="nav-link cursor-hand" View="typeof(Blazor.Pages.FetchData)">FetchData</RouteNavLink>
+                </li>
+            </ul>
+        </div>
+
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] private RouteViewManager RouteViewManager { get; set; }
+
+    [Inject] RouteViewService RouteViewService { get; set; }
+
+    [Inject] NavigationManager NavManager { get; set; }
+
+    private bool _isWasm => NavManager?.Uri.Contains("wasm", StringComparison.CurrentCultureIgnoreCase) ?? false;
+
+    private string _sidebarCss => _isWasm ? "sidebar sidebar-red" : "sidebar";
+
+    private void OnTab(Type view)
+    {
+        RouteViewManager.LoadViewAsync(view);
+    }
+}

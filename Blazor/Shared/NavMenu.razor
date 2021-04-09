@@ -1,0 +1,66 @@
+﻿<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" href="">@this.SiteTitle</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <RouteNavLink class="nav-link cursor-hand" RouteURL="@_otherContextUrl" ForceLoad="true" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> @_otherContextLinkName
+            </RouteNavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link cursor-hand" href=""  Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <RouteNavLink class="nav-link cursor-hand" RouteURL="routeviewer">
+                <span class="oi oi-plus" aria-hidden="true"></span> RouteView
+            </RouteNavLink>
+        </li>
+        <li class="nav-item px-3">
+            <RouteNavLink class="nav-link cursor-hand" RouteURL="counter">
+                <span class="oi oi-plus" aria-hidden="true"></span> Counter
+            </RouteNavLink>
+        </li>
+        <li class="nav-item px-3">
+            <RouteNavLink class="nav-link cursor-hand" RouteURL="fetchdata">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+            </RouteNavLink>
+        </li>
+        <li class="nav-item px-3">
+            <RouteNavLink class="nav-link cursor-hand" RouteURL="basicfetchdata">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Basic Fetch data
+            </RouteNavLink>
+        </li>
+    </ul>
+</div>
+
+@code {
+
+    [Parameter] public string SiteTitle { get; set; } = "Blazor";
+
+    [Inject] NavigationManager NavManager { get; set; }
+
+    private bool _isWasm => NavManager?.Uri.Contains("wasm", StringComparison.CurrentCultureIgnoreCase) ?? false;
+
+    private string _otherContextUrl => _isWasm ? "/" : "/wasm";
+
+    private string _otherContextLinkName => _isWasm ? "Server Home" : "WASM Home";
+
+    private string _title => _isWasm ? "AllinOne WASM" : "AllinOne Server";
+
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+}

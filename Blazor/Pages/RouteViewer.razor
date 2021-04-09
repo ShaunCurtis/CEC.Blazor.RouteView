@@ -1,0 +1,57 @@
+﻿<h3>RouteViewer</h3>
+
+<div class="container">
+    <div class="row my-2">
+        <div class="col-4">
+            Give me a new route (no spaces please)
+        </div>
+        <div class="col-4">
+            <input @bind-value="this.newRoute" />
+        </div>
+        <div class="col-4">
+            <button class="btn btn-success ml-2" @onclick="() => GoToRoute(newRoute)">Go to this Route</button>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12">
+            <button class="btn btn-dark ml-3" @onclick="() => GoToView(typeof(FetchData))">Go to FetchData</button>
+            <button class="@_layoutButtonCss" @onclick="() => ChangeLayout()">@_layoutButtonText</button>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [CascadingParameter] private RouteViewManager RouteViewManager { get; set; }
+
+    [Inject] RouteViewService RouteViewService { get; set; }
+
+    [Inject] NavigationManager NavManager { get; set; }
+
+    private string _layoutButtonText => RouteViewService.Layout != null ? "Normal Layout" : "Red Layout";
+
+    private string _layoutButtonCss => RouteViewService.Layout != null ? "btn btn-danger ml-3" : "btn btn-primary ml-3";
+
+    private string newRoute = string.Empty;
+
+    private void GoToView(Type view)
+        => RouteViewManager.LoadViewAsync(view);
+
+    private void GoToRoute(string url)
+    {
+        var route = $"^\\/{url}";
+        if (!RouteViewService.Routes.Any(item => item.RouteMatch.Equals(route, StringComparison.CurrentCultureIgnoreCase)))
+            RouteViewService.Routes.Add(new CustomRouteData() { PageType = typeof(Counter), RouteMatch = route });
+        NavManager.NavigateTo(url);
+    }
+
+    private void ChangeLayout()
+    {
+        if (RouteViewService.Layout != null)
+            RouteViewService.Layout = null;
+        else
+            RouteViewService.Layout = typeof(RedLayout);
+        RouteViewManager.Render();
+    }
+
+}
