@@ -37,5 +37,9 @@ namespace Blazor.Services
         public Task<List<WeatherForecast>> GetRecordsAsync()
             => Task.FromResult(this.records);
 
+        public WeatherForecast Record { get; set; } = new WeatherForecast();
+
+        public int FormStep { get; set; } = 1;
+
     }
 }

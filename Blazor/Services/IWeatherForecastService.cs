@@ -12,5 +12,9 @@ namespace Blazor.Services
     public interface IWeatherForecastService
     {
         public Task<List<WeatherForecast>> GetRecordsAsync();
+
+        public WeatherForecast Record { get; set; }
+
+        public int FormStep { get; set; }
     }
 }

@@ -130,7 +130,7 @@ namespace Blazor.Components
         }
 
         /// <inheritdoc />
-        public Task SetParametersAsync(ParameterView parameters)
+        public async Task SetParametersAsync(ParameterView parameters)
         {
             // Sets the component parameters
             parameters.SetParameterProperties(this);
@@ -143,8 +143,7 @@ namespace Blazor.Components
             // we've routed and need to clear the ViewData
             this.ViewData = null;
             // Render the component
-            this.Render();
-            return Task.CompletedTask;
+            await this.RenderAsync();
         }
 
         /// <summary>
@@ -152,15 +151,14 @@ namespace Blazor.Components
         /// </summary>
         /// <param name="viewData"></param>
         /// <returns></returns>
-        public Task LoadViewAsync(ViewData viewData = null)
+        public async Task LoadViewAsync(ViewData viewData = null)
         {
             if (viewData != null) this.ViewData = viewData;
             if (ViewData == null)
             {
                 throw new InvalidOperationException($"The {nameof(RouteViewManager)} component requires a non-null value for the parameter {nameof(ViewData)}.");
             }
-            this.Render();
-            return Task.CompletedTask;
+            await this.RenderAsync();
         }
 
         /// <summary>
@@ -168,11 +166,8 @@ namespace Blazor.Components
         /// </summary>
         /// <param name="viewtype"></param>
         /// <returns></returns>
-        public Task LoadViewAsync(Type viewtype)
-        {
-            var viewData = new ViewData(viewtype, new Dictionary<string, object>());
-            return this.LoadViewAsync(viewData);
-        }
+        public async Task LoadViewAsync(Type viewtype)
+            => await this.LoadViewAsync(new ViewData(viewtype, new Dictionary<string, object>()));
 
         /// <summary>
         /// Method to load a new view
@@ -180,42 +175,8 @@ namespace Blazor.Components
         /// <typeparam name="TView"></typeparam>
         /// <param name="data"></param>
         /// <returns></returns>
-        public Task LoadViewAsync<TView>(Dictionary<string, object> data = null)
-        {
-            var viewData = new ViewData(typeof(TView), data);
-            return this.LoadViewAsync(viewData);
-        }
-
-        /// <summary>
-        /// Method to load a new view
-        /// </summary>
-        /// <typeparam name="TView"></typeparam>
-        /// <param name="key"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public Task LoadViewAsync<TView>(string key, object value)
-        {
-            var data = new Dictionary<string, object>();
-            data.Add(key, value);
-            var viewData = new ViewData(typeof(TView), data);
-            return this.LoadViewAsync(viewData);
-        }
-
-        /// <summary>
-        /// Renders the component.
-        /// Cascades this instance of RouteViewManager and gets the layout Render Fragment
-        /// </summary>
-        /// <param name="builder">The <see cref="RenderTreeBuilder"/>.</param>
-        protected virtual void RenderComponent(RenderTreeBuilder builder)
-        {
-            _RenderEventQueued = false;
-            // Adds cascadingvalue for the ViewManager
-            builder.OpenComponent<CascadingValue<RouteViewManager>>(0);
-            builder.AddAttribute(1, "Value", this);
-            // Get the layout render fragment
-            builder.AddAttribute(2, "ChildContent", this._layoutViewFragment);
-            builder.CloseComponent();
-        }
+        public async Task LoadViewAsync<TView>(Dictionary<string, object> data = null)
+            => await this.LoadViewAsync(new ViewData(typeof(TView), data));
 
         /// <summary>
         ///  RenderFragment Delegate run when rendering the component
@@ -260,7 +221,7 @@ namespace Blazor.Components
                 }
                 builder.CloseComponent();
             }
-            else
+            else if (RouteData != null)
             {
                 builder.OpenComponent(0, RouteData.PageType);
                 foreach (var kvp in RouteData.RouteValues)
@@ -269,13 +230,19 @@ namespace Blazor.Components
                 }
                 builder.CloseComponent();
             }
+            else 
+            {
+                builder.OpenElement(0, "div");
+                builder.AddContent(1, "No Route or View Configured to Display");
+                builder.CloseElement();
+            }
         };
 
         /// <summary>
         /// Method to force a UI update
         /// Queues a render of the component
         /// </summary>
-        public void Render() => InvokeAsync(() =>
+        public async Task RenderAsync() => await InvokeAsync(() =>
         {
             if (!this._RenderEventQueued)
             {

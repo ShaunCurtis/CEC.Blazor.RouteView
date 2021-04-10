@@ -1,0 +1,56 @@
+﻿@page "/form"
+<h3>Form Part 1</h3>
+
+<EditForm Model="@DataService.Record" OnValidSubmit="(e) => GoToView(2)">
+    <div class="container">
+        <div class="row my-2">
+            <div class="col-4">
+                Date
+            </div>
+            <div class="col-4">
+                <InputDate @bind-Value="DataService.Record.Date"></InputDate>
+            </div>
+            <div class="col-4">
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-12 text-right">
+                <button type="submit" class="btn btn-success">Save and Next Step &gt;</button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [CascadingParameter] protected RouteViewManager RouteViewManager { get; set; }
+
+    [Inject] protected IWeatherForecastService DataService { get; set; }
+
+    protected SortedDictionary<int, Type> Forms = new SortedDictionary<int, Type>()
+    {
+        [1] = typeof(Form),
+        [2] = typeof(Form2),
+        [3] = typeof(Form3),
+        [4] = typeof(Form4),
+    };
+
+    protected async Task GoToView(int step)
+    {
+        if (Forms.ContainsKey(DataService.FormStep))
+        {
+            DataService.FormStep = step;
+            await RouteViewManager.LoadViewAsync(Forms[step]);
+        }
+    }
+
+    protected bool IsThisStep => Forms.ContainsKey(DataService.FormStep) && this.GetType() == Forms[DataService.FormStep];
+    protected bool IsStep => Forms.ContainsKey(DataService.FormStep);
+
+    protected override void OnInitialized()
+    {
+        Task task;
+        if (IsStep && !IsThisStep)
+            task = RouteViewManager.LoadViewAsync(Forms[DataService.FormStep]);
+    }
+
+}

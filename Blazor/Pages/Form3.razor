@@ -1,0 +1,22 @@
+﻿@inherits Form
+<h3>Form Part 3</h3>
+
+<EditForm Model="@DataService.Record" OnValidSubmit="(e) => GoToView(4)">
+    <div class="container">
+        <div class="row my-2">
+            <div class="col-4">
+                Summary
+            </div>
+            <div class="col-4">
+                <InputText @bind-Value="DataService.Record.Summary"></InputText>
+            </div>
+            <div class="col-4">
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-12 text-right">
+                <button class="btn btn-success">Save and Complete</button>
+            </div>
+        </div>
+    </div>
+</EditForm>

@@ -1,20 +1,52 @@
-﻿<h3>RouteViewer</h3>
-
-<div class="container">
+﻿<div class="container-fluid">
+    <div class="row my-2">
+        <div class="col-12">
+            <h3>Add a Custom Route</h3>
+        </div>
+    </div>
     <div class="row my-2">
         <div class="col-4">
-            Give me a new route (no spaces please)
+            Select a Page and a new route (no spaces please)
         </div>
-        <div class="col-4">
-            <input @bind-value="this.newRoute" />
+        <div class="col-2">
+            <select @bind="@this.selectedid" class="form-control">
+                @foreach (var type in Routes)
+                {
+                    if (type.Value.Name.Equals(selected, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        <option value="@type.Key" selected>@type.Value.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@type.Key">@type.Value.Name</option>
+                    }
+                }
+            </select>
         </div>
-        <div class="col-4">
+        <div class="col-3">
+            <input @bind-value="this.newRoute" class="form-control" />
+        </div>
+        <div class="col-3 text-right">
             <button class="btn btn-success ml-2" @onclick="() => GoToRoute(newRoute)">Go to this Route</button>
         </div>
     </div>
     <div class="row my-2">
         <div class="col-12">
+            <h3>Change View without Navigation</h3>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12 text-right">
             <button class="btn btn-dark ml-3" @onclick="() => GoToView(typeof(FetchData))">Go to FetchData</button>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12">
+            <h3>Change Layout</h3>
+        </div>
+    </div>
+    <div class="row my-2">
+        <div class="col-12 text-right">
             <button class="@_layoutButtonCss" @onclick="() => ChangeLayout()">@_layoutButtonText</button>
         </div>
     </div>
@@ -32,26 +64,43 @@
 
     private string _layoutButtonCss => RouteViewService.Layout != null ? "btn btn-danger ml-3" : "btn btn-primary ml-3";
 
-    private string newRoute = string.Empty;
+    private SortedDictionary<string, Type> Routes { get; set; }
 
-    private void GoToView(Type view)
-        => RouteViewManager.LoadViewAsync(view);
-
-    private void GoToRoute(string url)
+    protected override Task OnInitializedAsync()
     {
-        var route = $"^\\/{url}";
-        if (!RouteViewService.Routes.Any(item => item.RouteMatch.Equals(route, StringComparison.CurrentCultureIgnoreCase)))
-            RouteViewService.Routes.Add(new CustomRouteData() { PageType = typeof(Counter), RouteMatch = route });
-        NavManager.NavigateTo(url);
+        Routes = new SortedDictionary<string, Type>();
+        foreach (var item in Utils.GetTypesWithHelpAttribute(typeof(App).Assembly))
+            Routes.Add(Guid.NewGuid().ToString(), item);
+        return base.OnInitializedAsync();
     }
 
-    private void ChangeLayout()
+    private string newRoute = string.Empty;
+
+    private string selected = "Counter";
+
+    private string selectedid = string.Empty;
+
+    private async void GoToView(Type view)
+    => await RouteViewManager.LoadViewAsync(view);
+
+    private Task GoToRoute(string url)
+    {
+        var route = $"^\\/{url}";
+        var selectedtype = Routes[selectedid] ?? typeof(Counter) ;
+        selected = selectedtype.Name;
+        if (!RouteViewService.Routes.Any(item => item.RouteMatch.Equals(route, StringComparison.CurrentCultureIgnoreCase)))
+            RouteViewService.Routes.Add(new CustomRouteData() { PageType = selectedtype, RouteMatch = route });
+        NavManager.NavigateTo(url);
+        return Task.CompletedTask;
+    }
+
+    private async void ChangeLayout()
     {
         if (RouteViewService.Layout != null)
             RouteViewService.Layout = null;
         else
             RouteViewService.Layout = typeof(RedLayout);
-        RouteViewManager.Render();
+        await RouteViewManager.RenderAsync();
     }
 
 }

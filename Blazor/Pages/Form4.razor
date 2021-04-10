@@ -1,0 +1,43 @@
+﻿@inherits Form
+
+<h3>Form Part 4</h3>
+<h4>Your Data</h4>
+
+<EditForm Model="@DataService.Record">
+    <div class="container">
+        <div class="row my-2">
+            <div class="col-4">
+                Date
+            </div>
+            <div class="col-4">
+                <InputDate @bind-Value="DataService.Record.Date" class="form-control" disabled></InputDate>
+            </div>
+            <div class="col-4">
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-4">
+                Temperature &deg;C
+            </div>
+            <div class="col-4">
+                <InputNumber @bind-Value="DataService.Record.TemperatureC" class="form-control" disabled></InputNumber>
+            </div>
+            <div class="col-4">
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-4">
+                Summary
+            </div>
+            <div class="col-4">
+                <InputText @bind-Value="DataService.Record.Summary" class="form-control" disabled></InputText>
+            </div>
+            <div class="col-4">
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+
+}

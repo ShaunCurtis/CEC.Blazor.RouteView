@@ -23,5 +23,10 @@ namespace Blazor.Services
         public async Task<List<WeatherForecast>> GetRecordsAsync()
             => await this.HttpClient.GetFromJsonAsync<List<WeatherForecast>>($"/api/weatherforecast/list");
 
+        public WeatherForecast Record { get; set; } = new WeatherForecast();
+
+        public int FormStep { get; set; } = 1;
+
+
     }
 }
