@@ -13,12 +13,12 @@ namespace Blazor.Components
         /// <summary>
         /// Gets the type of the View.
         /// </summary>
-        public Type ViewType { get; set; }
+        public Type ViewType { get; private set; }
 
         /// <summary>
         /// Gets the type of the page matching the route.
         /// </summary>
-        public Type LayoutType { get; set; }
+        public Type LayoutType { get; private set; }
 
         /// <summary>
         /// Parameter values to add to the Route when created
@@ -32,8 +32,24 @@ namespace Blazor.Components
         /// <param name="viewValues">The view parameter values.</param>
         public ViewData(Type viewType, Dictionary<string, object> viewValues = null)
         {
-            if (viewType == null) throw new ArgumentNullException(nameof(viewType));
+            if (viewType == null) 
+                throw new ArgumentNullException(nameof(viewType));
             this.ViewType = viewType;
+            if (viewValues != null) this.ViewParameters = viewValues;
+        }
+
+        /// <summary>
+        /// Constructs an instance of <see cref="ViewData"/>.
+        /// </summary>
+        /// <param name="viewType"></param>
+        /// <param name="layout"></param>
+        /// <param name="viewValues"></param>
+        public ViewData(Type viewType, Type layout, Dictionary<string, object> viewValues = null)
+        {
+            if (viewType == null)
+                throw new ArgumentNullException(nameof(viewType));
+            this.ViewType = viewType;
+            this.LayoutType = layout;
             if (viewValues != null) this.ViewParameters = viewValues;
         }
     }

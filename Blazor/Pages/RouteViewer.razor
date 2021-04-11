@@ -5,7 +5,7 @@
         </div>
     </div>
     <div class="row my-2">
-        <div class="col-4">
+        <div class="col-5">
             Select a Page and a new route (no spaces please)
         </div>
         <div class="col-2">
@@ -26,7 +26,7 @@
         <div class="col-3">
             <input @bind-value="this.newRoute" class="form-control" />
         </div>
-        <div class="col-3 text-right">
+        <div class="col-2 text-right">
             <button class="btn btn-success ml-2" @onclick="() => GoToRoute(newRoute)">Go to this Route</button>
         </div>
     </div>
@@ -60,7 +60,7 @@
 
     [Inject] NavigationManager NavManager { get; set; }
 
-    private string _layoutButtonText => RouteViewService.Layout != null ? "Normal Layout" : "Red Layout";
+    private string _layoutButtonText => RouteViewService.Layout != null ? "Switch to Normal Layout" : "Switch to Red Layout";
 
     private string _layoutButtonCss => RouteViewService.Layout != null ? "btn btn-danger ml-3" : "btn btn-primary ml-3";
 
@@ -69,7 +69,7 @@
     protected override Task OnInitializedAsync()
     {
         Routes = new SortedDictionary<string, Type>();
-        foreach (var item in Utils.GetTypesWithHelpAttribute(typeof(App).Assembly))
+        foreach (var item in Utils.GetTypesWithCustomAttribute(typeof(App).Assembly, typeof(RouteAttribute)))
             Routes.Add(Guid.NewGuid().ToString(), item);
         return base.OnInitializedAsync();
     }

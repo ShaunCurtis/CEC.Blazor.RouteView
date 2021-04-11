@@ -25,12 +25,12 @@
 
     [CascadingParameter] RouteViewManager RouteViewManager { get; set; }
 
-    private void OnClick(MouseEventArgs e)
+    private async Task OnClick(MouseEventArgs e)
     {
         if (this.ViewData != null && this.RouteViewManager != null)
-            this.RouteViewManager.LoadViewAsync(this.ViewData);
+            await this.RouteViewManager.LoadViewAsync(this.ViewData);
         else if (this.View != null && this.RouteViewManager != null)
-            this.RouteViewManager.LoadViewAsync(this.View);
+            await this.RouteViewManager.LoadViewAsync(this.View);
         else if (!string.IsNullOrWhiteSpace(this.RouteURL))
             this.NavManager.NavigateTo(this.RouteURL, this.ForceLoad);
     }

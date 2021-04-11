@@ -50,17 +50,9 @@ namespace Blazor.Services
         /// <returns></returns>
         public bool GetRouteMatch(string url, out RouteData routeData)
         {
-            var route = Routes.FirstOrDefault(item => item.IsMatch(url));
-            if (route != null && !EqualityComparer<RouteData>.Default.Equals(route))
-            {
-                routeData = route.RouteData;
-                return true;
-            }
-            else
-            {
-                routeData = null;
-                return false;
-            }
+            var route = Routes?.FirstOrDefault(item => item.IsMatch(url)) ?? null;
+            routeData = route?.RouteData ?? null;
+            return route != null;
         }
     }
 }

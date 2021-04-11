@@ -141,7 +141,7 @@ namespace Blazor.Components
                 throw new InvalidOperationException($"The {nameof(RouteView)} component requires a non-null value for the parameter {nameof(RouteData)}.");
             }
             // we've routed and need to clear the ViewData
-            this.ViewData = null;
+            this._ViewData = null;
             // Render the component
             await this.RenderAsync();
         }
@@ -208,29 +208,30 @@ namespace Blazor.Components
         /// </summary>
         private RenderFragment _renderComponentWithParameters => builder =>
         {
+            Type componentType = null;
+            IReadOnlyDictionary<string, object> parameters = new Dictionary<string, object>();
+
             if (_ViewData != null)
             {
-                // Adds the defined view with any defined parameters
-                builder.OpenComponent(0, _ViewData.ViewType);
-                if (this._ViewData.ViewParameters != null)
-                {
-                    foreach (var kvp in _ViewData.ViewParameters)
-                    {
-                        builder.AddAttribute(1, kvp.Key, kvp.Value);
-                    }
-                }
-                builder.CloseComponent();
+                componentType = _ViewData.ViewType;
+                parameters = _ViewData.ViewParameters;
             }
             else if (RouteData != null)
             {
-                builder.OpenComponent(0, RouteData.PageType);
-                foreach (var kvp in RouteData.RouteValues)
+                componentType = RouteData.PageType;
+                parameters = RouteData.RouteValues;
+            }
+
+            if (componentType != null)
+            {
+                builder.OpenComponent(0, componentType);
+                foreach (var kvp in parameters)
                 {
                     builder.AddAttribute(1, kvp.Key, kvp.Value);
                 }
                 builder.CloseComponent();
             }
-            else 
+            else
             {
                 builder.OpenElement(0, "div");
                 builder.AddContent(1, "No Route or View Configured to Display");
