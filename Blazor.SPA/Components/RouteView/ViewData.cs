@@ -6,7 +6,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Blazor.Components
+namespace Blazor.SPA.Components
 {
     public class ViewData
     {

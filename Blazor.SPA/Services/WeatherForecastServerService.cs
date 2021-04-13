@@ -3,13 +3,13 @@
 /// License: MIT
 /// ==================================
 
-using Blazor.Data;
+using Blazor.SPA.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Blazor.Services
+namespace Blazor.SPA.Services
 {
     public class WeatherForecastServerService : IWeatherForecastService
     {

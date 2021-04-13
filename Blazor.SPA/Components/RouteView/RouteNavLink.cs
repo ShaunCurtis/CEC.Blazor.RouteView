@@ -23,40 +23,40 @@ using Microsoft.AspNetCore.Components.Web;
 using System.Threading.Tasks;
 
 
-namespace Blazor.Components
+namespace Blazor.SPA.Components
 {
     public class RouteNavLink : ComponentBase, IDisposable
     {
         private const string DefaultActiveClass = "active";
 
         private bool _isActive;
-        private string? _hrefAbsolute;
-        private string? _class;
+        private string _hrefAbsolute = null;
+        private string _class = null;
 
         /// <summary>
         /// Gets or sets the CSS class name applied to the NavLink when the
         /// current route matches the NavLink href.
         /// </summary>
         [Parameter]
-        public string? ActiveClass { get; set; }
+        public string ActiveClass { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a collection of additional attributes that will be added to the generated
         /// <c>a</c> element.
         /// </summary>
         [Parameter(CaptureUnmatchedValues = true)]
-        public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
+        public IReadOnlyDictionary<string, object> AdditionalAttributes { get; set; }
 
         /// <summary>
         /// Gets or sets the computed CSS class based on whether or not the link is active.
         /// </summary>
-        protected string? CssClass { get; set; }
+        protected string CssClass { get; set; }
 
         /// <summary>
         /// Gets or sets the child content of the component.
         /// </summary>
         [Parameter]
-        public RenderFragment? ChildContent { get; set; }
+        public RenderFragment ChildContent { get; set; }
 
         /// <summary>
         /// Gets or sets a value representing the URL matching behavior.
@@ -111,7 +111,7 @@ namespace Blazor.Components
         protected override void OnParametersSet()
         {
             // Update computed state
-            var href = (string?)null;
+            var href = (string)null;
             if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("href", out var obj))
             {
                 href = Convert.ToString(obj, CultureInfo.InvariantCulture);
@@ -120,7 +120,7 @@ namespace Blazor.Components
             _hrefAbsolute = href == null ? null : NavigationManager.ToAbsoluteUri(href).AbsoluteUri;
             _isActive = ShouldMatch(NavigationManager.Uri);
 
-            _class = (string?)null;
+            _class = (string)null;
             if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("class", out obj))
             {
                 _class = Convert.ToString(obj, CultureInfo.InvariantCulture);
@@ -156,7 +156,7 @@ namespace Blazor.Components
             CssClass = _isActive ? CombineWithSpace(_class, ActiveClass ?? DefaultActiveClass) : _class;
         }
 
-        private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+        private void OnLocationChanged(object sender, LocationChangedEventArgs args)
         {
             // We could just re-render always, but for this component we know the
             // only relevant state change is to the _isActive property.
@@ -229,7 +229,7 @@ namespace Blazor.Components
             builder.CloseElement();
         }
 
-        private string? CombineWithSpace(string? str1, string str2)
+        private string CombineWithSpace(string str1, string str2)
             => str1 == null ? str2 : $"{str1} {str2}";
 
         private static bool IsStrictlyPrefixWithSeparator(string value, string prefix)

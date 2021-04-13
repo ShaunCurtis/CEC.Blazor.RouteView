@@ -36,8 +36,26 @@
         </div>
     </div>
     <div class="row my-2">
-        <div class="col-12 text-right">
-            <button class="btn btn-dark ml-3" @onclick="() => GoToView(typeof(FetchData))">Go to FetchData</button>
+        <div class="col-6">
+            Select a Page to View
+        </div>
+        <div class="col-3">
+            <select @bind="@this.selectedPage" class="form-control">
+                @foreach (var type in Routes)
+                {
+                    if (type.Value.Name.Equals(selected, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        <option value="@type.Key" selected>@type.Value.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@type.Key">@type.Value.Name</option>
+                    }
+                }
+            </select>
+        </div>
+        <div class="col-3 text-right">
+            <button class="btn btn-dark ml-3" @onclick="() => GoToView()">Load the View</button>
         </div>
     </div>
     <div class="row my-2">
@@ -80,13 +98,18 @@
 
     private string selectedid = string.Empty;
 
-    private async void GoToView(Type view)
-    => await RouteViewManager.LoadViewAsync(view);
+    private string selectedPage = string.Empty;
+
+    private async void GoToView()
+    {
+        var selectedtype = Routes[selectedPage] ?? typeof(Counter);
+        await RouteViewManager.LoadViewAsync(selectedtype);
+    }
 
     private Task GoToRoute(string url)
     {
         var route = $"^\\/{url}";
-        var selectedtype = Routes[selectedid] ?? typeof(Counter) ;
+        var selectedtype = Routes[selectedid] ?? typeof(Counter);
         selected = selectedtype.Name;
         if (!RouteViewService.Routes.Any(item => item.RouteMatch.Equals(route, StringComparison.CurrentCultureIgnoreCase)))
             RouteViewService.Routes.Add(new CustomRouteData() { PageType = selectedtype, RouteMatch = route });

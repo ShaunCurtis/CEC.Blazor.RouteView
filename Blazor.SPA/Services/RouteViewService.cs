@@ -3,8 +3,8 @@
 /// License: MIT
 /// ==================================
 
-using Blazor.Components;
-using Blazor.Pages;
+using Blazor.SPA.Components;
+using Blazor.SPA.Pages;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Blazor.Services
+namespace Blazor.SPA.Services
 {
     /// <summary>
     /// Service Class for managing Cusotm Routes and Runtime Layout Changes

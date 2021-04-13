@@ -1,4 +1,4 @@
-using Blazor.Services;
+using Blazor.SPA.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;

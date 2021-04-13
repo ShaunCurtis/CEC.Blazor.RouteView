@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazor", "Blazor\Blazor.csproj", "{47C0317D-FAE1-4C6A-B2AE-223C4E307367}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazor.SPA", "Blazor.SPA\Blazor.SPA.csproj", "{47C0317D-FAE1-4C6A-B2AE-223C4E307367}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Blazor.Web", "Blazor.Web\Blazor.Web.csproj", "{B6F60AEB-0ABE-4101-99FF-E9D4C8325682}"
 EndProject

@@ -16,11 +16,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Blazor.Services;
+using Blazor.SPA.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
-namespace Blazor.Components
+namespace Blazor.SPA.Components
 {
     /// <summary>
     /// Displays the specified page component, rendering it inside its layout
@@ -116,13 +116,6 @@ namespace Blazor.Components
         /// </summary>
         private RenderHandle _renderHandle;
 
-        /// <summary>
-        /// Field to get the appropriate Layout
-        /// </summary>
-        private Type _pageLayoutType => RouteData?.PageType.GetCustomAttribute<LayoutAttribute>()?.LayoutType
-            ?? RouteViewService.Layout
-            ?? DefaultLayout;
-
         /// <inheritdoc />
         public void Attach(RenderHandle renderHandle)
         {
@@ -197,6 +190,10 @@ namespace Blazor.Components
         /// </summary>
         private RenderFragment _layoutViewFragment => builder =>
         {
+            Type _pageLayoutType = RouteData?.PageType.GetCustomAttribute<LayoutAttribute>()?.LayoutType
+                ?? RouteViewService.Layout
+                ?? DefaultLayout;
+
             builder.OpenComponent<LayoutView>(0);
             builder.AddAttribute(1, nameof(LayoutView.Layout), _pageLayoutType);
             builder.AddAttribute(2, nameof(LayoutView.ChildContent), _renderComponentWithParameters);

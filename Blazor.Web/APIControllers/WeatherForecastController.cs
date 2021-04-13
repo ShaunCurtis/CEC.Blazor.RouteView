@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Blazor.Data;
+using Blazor.SPA.Data;
 using Microsoft.AspNetCore.Mvc;
 using MVC = Microsoft.AspNetCore.Mvc;
-using Blazor.Services;
+using Blazor.SPA.Services;
 
 namespace Blazor.Web.APIControllers
 {

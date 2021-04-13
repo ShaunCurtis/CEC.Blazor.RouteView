@@ -3,13 +3,13 @@
 /// License: MIT
 /// ==================================
 
-using Blazor.Utilities;
+using Blazor.SPA.Utilities;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Blazor.Components
+namespace Blazor.SPA.Components
 {
     /// <summary>
     /// Class to extend RouteData and Add match functionality for Custom Routing

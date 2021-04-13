@@ -7,7 +7,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="5.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Blazor\Blazor.csproj" />
+    <ProjectReference Include="..\Blazor.SPA\Blazor.SPA.csproj" />
   </ItemGroup>
 
 </Project>

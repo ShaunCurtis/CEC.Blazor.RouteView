@@ -3,7 +3,7 @@
 /// License: MIT
 /// ==================================
 
-using Blazor.Services;
+using Blazor.SPA.Services;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Reflection;
 
-namespace Blazor.Components
+namespace Blazor.SPA.Components
 {
     /// <summary>
     /// Class to handle custom runtime routing
