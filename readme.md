@@ -1,507 +1,626 @@
 ﻿# Blazor AllinOne 
 
-This article shows how to build a single Blazor application that runs in both WASM and Server Modes.
+# Adding Dynamic Routing, Layouts and RouteViews to the Blazor App Component
 
-![screenshot](https://shauncurtis.github.io/siteimages/Articles/AllinOne/Screenshot.png)
+> Publish Date: 2021-04-13  - Last Updated: 2021-04-13
 
-## Code Repository
+## Overview
 
-The Code repository for the article is [here - https://github.com/ShaunCurtis/AllinOne ](https://github.com/ShaunCurtis/AllinOne)
+`App` is the Blazor UI root component.  This article looks at how it works and demonstrates how to:
 
-## The Solution and Projects
+1. Add Dynamic Layouts - change the default layout at runtime.
+2. Add Dynamic Routes - add and remove extra routes at runtime.
+3. Add Dynamic RouteViews - change the RouteView component directly without Routing.
 
-Create a new solution called **Blazor** using the Blazor WebAssembly template.  Don't choose to host it on Aspnetcore.  You will get a single project called **Blazor**.
+![EditForm](https://shauncurtis.github.io/siteimages/Articles/App/Screenshot.png)
 
-Now add a second project to the solution using the *ASP.NET Core Web App* template.  Call it **Blazor.Web**.  Set it as the startup project.
+## Code and Examples
 
-The solution should now look like this:
+[The repository for this project is here](https://github.com/ShaunCurtis/CEC.Blazor.RouteView), and is based on my [Blazor AllInOne Template](https://github.com/ShaunCurtis/AllinOne).
 
-![Solution](https://shauncurtis.github.io/siteimages/Articles/AllinOne/Base-Projects.png)
+You can view a demo of the components running on my Blazor.Database site here [https://cec-blazor-database.azurewebsites.net/](https://cec-blazor-database.azurewebsites.net/) from the highlighted links.
 
-## Blazor Project Changes
+## The Blazor Application
 
-The solution runs the WASM context in a sub-directory on the web site.  To get this working there are a few modifications that need to be made to the *Blazor* project.
+`App` is normally defined in *App.razor*.  The same component is used in both Web Assembly and Server contexts.
 
-1. Move the contents of wwwroot to *Blazor.Web* and delete everything in *wwwroot*.
-2. Add a `StaticWebAssetBasePath` entry to the project file set to `wasm`.  This is case sensitive in the context in which it is used, so stick to small letters.  
-3. Add the necessary packages.
-
-The project file should look like this:
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
-
-  <PropertyGroup>
-    <StaticWebAssetBasePath>wasm</StaticWebAssetBasePath>
-    <TargetFramework>net5.0</TargetFramework>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.4" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.4" PrivateAssets="all" />
-    <PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-</Project>
-```
-
-### MainLayout
-
-`MainLayout` needs to be modified to handle both contexts.  The solution changes the colour scheme for each context.  WASM  *Teal* and Server *Steel*. 
-
-```csharp
-@inherits LayoutComponentBase
-<div class="page">
-    @*change class*@
-    <div class="@_sidebarCss">
-        <NavMenu />
-    </div>
-    <div class="main">
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-        <div class="content px-4">
-            @Body
-        </div>
-    </div>
-</div>
-
-@code {
-    [Inject] NavigationManager NavManager { get; set; }
-    private bool _isWasm => NavManager?.Uri.Contains("wasm", StringComparison.CurrentCultureIgnoreCase) ?? false;
-    private string _sidebarCss => _isWasm ? "sidebar sidebar-teal" : "sidebar sidebar-steel";
-}
-```
-
-Add the following Css styles to the component Css file below `.sidebar`.
-```css
-.sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-}
-
-/* Added Styles*/
-.sidebar-teal {
-    background-image: linear-gradient(180deg, rgb(0, 64, 128) 0%, rgb(0,96,192) 70%);
-}
-
-.sidebar-steel {
-    background-image: linear-gradient(180deg, #2a3f4f 0%, #446680 70%);
-}
-/* End Added Styles*/
-```
-
-### NavMenu
-
-Add code and markup - it adds a link to switch between contexts.
-
-```csharp
-<div class="top-row pl-4 navbar navbar-dark">
-    @*Change title*@
-    <a class="navbar-brand" href="">Blazor</a>
-    <button class="navbar-toggler" @onclick="ToggleNavMenu">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-</div>
-
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <ul class="nav flex-column">
-        @*Add links between contexts*@
-        <li class="nav-item px-3">
-                <NavLink class="nav-link" href="@_otherContextUrl" Match="NavLinkMatch.All">
-                    <span class="oi oi-home" aria-hidden="true"></span> @_otherContextLinkName
-                </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-            </NavLink>
-        </li>
-    </ul>
-</div>
-
-@code {
-    [Inject] NavigationManager NavManager { get; set; }
-    private bool _isWasm => NavManager?.Uri.Contains("wasm", StringComparison.CurrentCultureIgnoreCase) ?? false;
-    private string _otherContextUrl => _isWasm ? "/" : "/wasm";
-    private string _otherContextLinkName => _isWasm ? "Server Home" : "WASM Home";
-    private string _title => _isWasm ? "AllinOne WASM" : "AllinOne Server";
-    private bool collapseNavMenu = true;
-    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}
-```
-### FetchData.razor
-
-Update the Url for getting forecasts by adding a `/` at the start, the file is now in the root and not in `wasm`.
-
-```csharp
-protected override async Task OnInitializedAsync()
-{
-    forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("/sample-data/weather.json");
-}
-```
-
-## Blazor.Web
-
-Update the project file:
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk.Web">
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="5.0.3" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Blazor\Blazor.csproj" />
-  </ItemGroup>
-</Project>
-```
-
-Add a Razor Page to *Pages* called *WASM.cshtml* - the launch page for the WASM SPA.
+In the Web Assembly context the SPA startup page contains an element placeholder which is replaced when `Program` starts in the Web Assembly context.
 
 ```html
-@page "/wasm"
-@{
-    Layout = null;
-}
-
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Blazor</title>
-    @*Change base*@
-    <base href="/wasm/" />
-    @*Update Link hrefs*@
-    <link href="/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="/css/app.css" rel="stylesheet" />
-    <link href="/wasm/Blazor.styles.css" rel="stylesheet" />
-</head>
+....
 <body>
     <div id="app">Loading...</div>
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-    @*Update js sources *@
-    <script src="/wasm/_framework/blazor.webassembly.js"></script>
+    ...
 </body>
-</html>
-```
-Add a second Razor Page to *Pages* called *Server.cshtml* - the launch page for the Servr SPA.
-
+``` 
+The code line that defines the replacement in `Program` is:
 ```csharp
-@page "/"
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-@{
-    Layout = null;
-}
+    // Replace the app id element with the component App
+    builder.RootComponents.Add<App>("#app");
+```
 
-<!DOCTYPE html>
-<html>
+In the Server context `App` is declared directly as a Razor component in the Razor markup.  It gets pre-rendered by the server and then updated by the Blazor Server client in the browser. 
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Blazor</title>
-    <base href="/" />
-    <link href="/css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="/css/site.css" rel="stylesheet" />
-    <link href="/wasm/Blazor.styles.css" rel="stylesheet" />
-</head>
-
+```html
+...
 <body>
     <component type="typeof(Blazor.App)" render-mode="ServerPrerendered" />
-
-    <div id="blazor-error-ui">
-        <environment include="Staging,Production">
-            An error has occurred. This application may no longer respond until reloaded.
-        </environment>
-        <environment include="Development">
-            An unhandled exception has occurred. See browser dev tools for details.
-        </environment>
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-
-    <script src="_framework/blazor.server.js"></script>
+...
 </body>
-</html>
+```
+
+## The App Component
+
+The `App` code is shown below.  It's a standard Razor component, inheriting from `ComponentBase`.
+
+`Router` is the local root component and sets `AppAssembly` to the assembly containing `Program`.  On initialization it trawls `Assembly` for all classes with a Route attribute and registers with the `NavigationChanged` event on the NavigationManager Service.  On a navigation event it tries to match the navigation Url to a route.  If it finds one, it renders the `Found` render fragment, otherwise it renders `NotFound`.
+
+```html
+<Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p>Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
+```
+
+`RouteView` is declared within `Found`.  `RouteData` is set to the router's current `routeData` object and `DefaultLayout` set to an application Layout `Type`.  `RouteView` renders an instance of `RouteData.Type` as a component within either the a page specific layout or the default layout, and applies any parameters in `RouteData.RouteValues`.
+
+`NotFound` contains a `LayoutView` component, specifying a layout to render any child content in.
+
+## RouteViewService
+
+`RouteViewService` is the state management service for the new components.  It's registered in the WASM and Server Services.  The Server version can be either a Singleton or Scoped, depending on the application needs.  You could have two separate services to manage application and user contexts separately.
+
+```csharp
+public class RouteViewService 
+{
+  ....
+}
 ``` 
 
-### Index.cshtml
-
-Update the `@page` directive to `@page "/index"`.
-
-### Startup.cs
-
-Update `Startup` to handle WASM and Server middleware paths.
+In the Server it's added to `Startup` in `ConfigServices`.
 
 ```csharp
-public class Startup
+services.AddSingleton<RouteViewService>();
+```
+
+In the Web Assembly context it's added to `Program`.
+
+```csharp
+builder.Services.AddScoped<RouteViewService>();
+```
+
+### RouteViewManager
+
+`RouteViewManager` replaces `RouteView`.
+
+It's implements `RouteView`'s functionality.  It's too large to show in it's entirety so We'll look at the key functionality in sections.
+
+When a routing event occurs, `RouteViewManager.RouteData` is updated and `Router` re-rendered.  The `Renderer` calls `SetParametersAsync` on  `RouteViewManager`, passing the updated *Parameters*.  `SetParametersAsync` checks it has a valid `RouteData`, sets `_ViewData` to null and renders the component.  `_ViewData` is set to null to ensure the component loads the route. A valid `ViewData` object has precedence over a valid `RouteData` object in the render process.
+  
+```csharp
+public await Task SetParametersAsync(ParameterView parameters)
 {
-    public Startup(IConfiguration configuration)
+    // Sets the component parameters
+    parameters.SetParameterProperties(this);
+    // Check if we have either RouteData or ViewData
+    if (RouteData == null)
     {
-        Configuration = configuration;
+        throw new InvalidOperationException($"The {nameof(RouteView)} component requires a non-null value for the parameter {nameof(RouteData)}.");
+    }
+    // we've routed and need to clear the ViewData
+    this._ViewData = null;
+    // Render the component
+    await this.RenderAsync();
+}
+```
+
+`Render` uses InvokeAsync to ensure the render event is run on the correct thread context. `_RenderEventQueued` ensures there's only only one render event in the Renderer's queue.
+
+```csharp
+public async Task RenderAsync() => await InvokeAsync(() =>
+    {
+        if (!this._RenderEventQueued)
+        {
+            this._RenderEventQueued = true;
+            _renderHandle.Render(_renderDelegate);
+        }
+    }
+);
+```
+
+For those curious, `InvokeAsync` looks like this.
+
+```csharp
+protected Task InvokeAsync(Action workItem) => _renderHandle.Dispatcher.InvokeAsync(workItem);
+```
+
+`RouteViewManager`s content is built as a set of components, each defined within a `RenderFragment`.
+
+`_renderDelegate` defines the local root component, cascading itself and adding the `_layoutViewFragment` fragment as it's `ChildContent`.
+
+```csharp
+private RenderFragment _renderDelegate => builder =>
+{
+    // We're being executed so no longer queued
+    _RenderEventQueued = false;
+    // Adds cascadingvalue for the ViewManager
+    builder.OpenComponent<CascadingValue<RouteViewManager>>(0);
+    builder.AddAttribute(1, "Value", this);
+    // Get the layout render fragment
+    builder.AddAttribute(2, "ChildContent", this._layoutViewFragment);
+    builder.CloseComponent();
+};
+```
+
+`_layoutViewFragment` selects the layout, adds it and sets `_renderComponentWithParameters` as it's `ChildContent`.
+
+```csharp
+private RenderFragment _layoutViewFragment => builder =>
+{
+    Type _pageLayoutType = RouteData?.PageType.GetCustomAttribute<LayoutAttribute>()?.LayoutType
+        ?? RouteViewService.Layout
+        ?? DefaultLayout;
+
+    builder.OpenComponent<LayoutView>(0);
+    builder.AddAttribute(1, nameof(LayoutView.Layout), _pageLayoutType);
+    builder.AddAttribute(2, nameof(LayoutView.ChildContent), _renderComponentWithParameters);
+    builder.CloseComponent();
+};
+```
+
+`_renderComponentWithParameters` selects the view/route component to render and adds it with the supplied parameters.  A valid view take precedence over a valid route.
+
+```csharp
+private RenderFragment _renderComponentWithParameters => builder =>
+{
+    Type componentType = null;
+    IReadOnlyDictionary<string, object> parameters = new Dictionary<string, object>();
+
+    if (_ViewData != null)
+    {
+        componentType = _ViewData.ViewType;
+        parameters = _ViewData.ViewParameters;
+    }
+    else if (RouteData != null)
+    {
+        componentType = RouteData.PageType;
+        parameters = RouteData.RouteValues;
     }
 
-    public IConfiguration Configuration { get; }
-
-    // This method gets called by the runtime. Use this method to add services to the container.
-    public void ConfigureServices(IServiceCollection services)
+    if (componentType != null)
     {
-        services.AddRazorPages();
-        services.AddServerSideBlazor();
-
-        // Server Side Blazor doesn't register HttpClient by default
-        // Thanks to Robin Sue - Suchiman https://github.com/Suchiman/BlazorDualMode
-        if (!services.Any(x => x.ServiceType == typeof(HttpClient)))
+        builder.OpenComponent(0, componentType);
+        foreach (var kvp in parameters)
         {
-            // Setup HttpClient for server side in a client side compatible fashion
-            services.AddScoped<HttpClient>(s =>
+            builder.AddAttribute(1, kvp.Key, kvp.Value);
+        }
+        builder.CloseComponent();
+    }
+    else
+    {
+        builder.OpenElement(0, "div");
+        builder.AddContent(1, "No Route or View Configured to Display");
+        builder.CloseElement();
+    }
+};
+```
+
+## Dynamic Layouts
+
+Out-of-the-box, Blazor layouts are defined and fixed at compile time.  `@Layout` is Razor talk that gets transposed when the Razor is pre-compiled to:
+
+```csharp
+[Microsoft.AspNetCore.Components.LayoutAttribute(typeof(MainLayout))]
+[Microsoft.AspNetCore.Components.RouteAttribute("/")]
+[Microsoft.AspNetCore.Components.RouteAttribute("/index")]
+public partial class Index : Microsoft.AspNetCore.Components.ComponentBase
+....
+```
+
+To change Layouts dynamically we use `RouteViewService` to store the layout. It can be set from any component that injects the service.
+
+```csharp
+public class RouteViewService
+{
+    public Type Layout { get; set; }
+    ....
+}
+```
+
+`_layoutViewFragment` in `RouteViewManager` chooses the layout - `RouteViewService.Layout` is set above the default layout in precedence.
+```csharp
+private RenderFragment _layoutViewFragment => builder =>
+{
+    Type _pageLayoutType = RouteData?.PageType.GetCustomAttribute<LayoutAttribute>()?.LayoutType
+        ?? RouteViewService.Layout
+        ?? DefaultLayout;
+
+    builder.OpenComponent<LayoutView>(0);
+    builder.AddAttribute(1, nameof(LayoutView.Layout), _pageLayoutType);
+    builder.AddAttribute(2, nameof(LayoutView.ChildContent), _renderComponentWithParameters);
+    builder.CloseComponent();
+};
+```
+
+Changing in the layout is demonstrated in the demo pages.
+
+## Dynamic Routing
+
+Dynamic Routing is a little more complicated.  `Router` is a sealed box, so it's take it or re-write it.  Unless you must, don't re-write it.  We're not looking to change existing routes, just add and remove new dynamic routes.
+
+Routes are defined at compile time and are used internally within the `Router` Component.
+
+RouteView Razor Pages are labelled like this:
+```html
+@page "/"
+@page "/index"
+```
+
+This is Razor talk, and gets transposed into the following in the C# class when pre-compiled.
+
+```csharp
+[Microsoft.AspNetCore.Components.RouteAttribute("/")]
+[Microsoft.AspNetCore.Components.RouteAttribute("/index")]
+public partial class Index : Microsoft.AspNetCore.Components.ComponentBase
+.....
+```
+
+When `Router` initializes it trawls any assemblies provided and builds a route dictionary of component/route pairs.
+
+You can get a list of route attribute components like this:
+
+```csharp
+static public IEnumerable<Type> GetTypeListWithCustomAttribute(Assembly assembly, Type attribute)
+    => assembly.GetTypes().Where(item => (item.GetCustomAttributes(attribute, true).Length > 0));
+```
+
+On initial render the Router register a delegate with the `NavigationManager.LocationChanged` event.  This delegate looks up routes and triggers render events on the `Router`. If it finds a route it renders `Found` which renders our new `RouteViewManager`.  `RouteViewManager` builds out the Layout and adds a new instance of the component defined in `RouteData`.
+
+When it doesn't find a route, what happens depends on the `IsNavigationIntercepted` property of the `LocationChangedEventArgs` provided by the event:
+
+1. True if it intercepts navigation in the DOM - anchors, etc.
+2. True if a UI component calls it's `NavigateTo` method and sets `ForceLoad`.
+3. False if a UI component calls it's `NavigateTo` method and sets `ForceLoad`.
+
+If we can avoid causing a hard navigation events in `Router`, we can add a component in `NotFound` to handle additional dynamic routing.  Not too difficult, it is our code!  There's an enhanced `NavLink` control to help control navigation - covered later.  In the event of a hard navigation event, routing will still work, but the application reloads.  Any rogue navigation events should be detected and fixed during testing.
+
+### CustomRouteData
+
+`CustomRouteData` holds the information needed to make routing decisions.  The class looks like this with inline detailed explanations.  
+
+```csharp
+    public class CustomRouteData
+    {
+        /// The standard RouteData.
+        public RouteData RouteData { get; private set; }
+        /// The PageType to load on a match 
+        public Type PageType { get; set; }
+        /// The Regex String to define the route
+        public string RouteMatch { get; set; }
+        /// Parameter values to add to the Route when created name/defaultvalue
+        public SortedDictionary<string, object> ComponentParameters { get; set; } = new SortedDictionary<string, object>();
+
+        /// Method to check if we have a route match
+        public bool IsMatch(string url)
+        {
+            // get the match
+            var match = Regex.Match(url, this.RouteMatch,RegexOptions.IgnoreCase);
+            if (match.Success)
             {
-                // Creating the URI helper needs to wait until the JS Runtime is initialized, so defer it.
-                var uriHelper = s.GetRequiredService<NavigationManager>();
-                return new HttpClient
+                // create new dictionary object to add to the RouteData
+                var dict = new Dictionary<string, object>();
+                //  check we have the same or fewer groups as parameters to map the to
+                if (match.Groups.Count >= ComponentParameters.Count)
                 {
-                    BaseAddress = new Uri(uriHelper.BaseUri)
-                };
-            });
+                    var i = 1;
+                    // iterate through the parameters and add the next match
+                    foreach (var pars in ComponentParameters)
+                    {
+                        string matchValue = string.Empty;
+                        if (i < match.Groups.Count)
+                            matchValue = match.Groups[i].Value;
+                        //  Use a StypeSwitch object to do the Type Matching and create the dictionary pair 
+                        var ts = new TypeSwitch()
+                            .Case((int x) =>
+                            {
+                                if (int.TryParse(matchValue, out int value))
+                                    dict.Add(pars.Key, value);
+                                else
+                                    dict.Add(pars.Key, pars.Value);
+                            })
+                            .Case((float x) =>
+                            {
+                                if (float.TryParse(matchValue, out float value))
+                                    dict.Add(pars.Key, value);
+                                else
+                                    dict.Add(pars.Key, pars.Value);
+                            })
+                            .Case((decimal x) =>
+                            {
+                                if (decimal.TryParse(matchValue, out decimal value))
+                                    dict.Add(pars.Key, value);
+                                else
+                                    dict.Add(pars.Key, pars.Value);
+                            })
+                            .Case((string x) =>
+                            {
+                                dict.Add(pars.Key, matchValue);
+                            });
+
+                        ts.Switch(pars.Value);
+                        i++;
+                    }
+                }
+                // create a new RouteData object and assign it to the RouteData property. 
+                this.RouteData = new RouteData(this.PageType, dict);
+            }
+            return match.Success;
+        }
+
+        /// Method to check if we have a route match and return the RouteData
+        public bool IsMatch(string url, out RouteData routeData)
+        {
+            routeData = this.RouteData;
+            return IsMatch(url);
         }
     }
+```
 
-    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+For those interested, `TypeSwitch` looks like this (thanks to *cdiggins* on StackOverflow for the code):
+
+```csharp
+/// =================================
+/// Author: stackoverflow: cdiggins
+/// ==================================
+    public class TypeSwitch
     {
-        if (env.IsDevelopment())
+        public TypeSwitch Case<T>(Action<T> action) { matches.Add(typeof(T), (x) => action((T)x)); return this; }
+        private Dictionary<Type, Action<object>> matches = new Dictionary<Type, Action<object>>();
+        public void Switch(object x) { matches[x.GetType()](x); }
+    }
+```
+
+## Updates to the RouteViewService
+
+The updated sections in `RouteViewService` are shown below. `Routes` holds the list of custom routes - it's deliberately left open for customization. 
+
+```csharp
+public List<CustomRouteData> Routes { get; private set; } = new List<CustomRouteData>();
+
+public bool GetRouteMatch(string url, out RouteData routeData)
+{
+    var route = Routes?.FirstOrDefault(item => item.IsMatch(url)) ?? null;
+    routeData = route?.RouteData ?? null;
+    return route != null;
+}
+```
+
+## The RouteNotFoundManager Component
+
+`RouteNotFoundManager` is a simple version of `RouteViewManager`.
+
+`SetParametersAsync` is called when the component loads.  It gets the local Url, calls `GetRouteMatch` on `RouteViewService`, and renders the component.  If there's no layout, it just renders the `ChildContent`.
+
+```csharp
+public Task SetParametersAsync(ParameterView parameters)
+{
+    parameters.SetParameterProperties(this);
+    // Get the route url
+    var url = $"/{NavManager.Uri.Replace(NavManager.BaseUri, "")}";
+    // check if we have a custom route and if so use it
+    if (RouteViewService.GetRouteMatch(url, out var routedata))
+        _routeData = routedata;
+    // if The layout is blank show the ChildContent without a layout 
+    if (_pageLayoutType == null)
+        _renderHandle.Render(ChildContent);
+    // otherwise show the route or ChildContent inside the layout
+    else
+        _renderHandle.Render(_ViewFragment);
+    return Task.CompletedTask;
+}
+```
+
+`_ViewFragment` either renders a `RouteViewManager`, setting `RouteData` if it finds a custom route, or the contents of `RouteNotFoundManager`. 
+  
+```csharp
+/// Layouted Render Fragment
+private RenderFragment _ViewFragment => builder =>
+{
+    // check if we have a RouteData object and if so load the RouteViewManager, otherwise the ChildContent
+    if (_routeData != null)
+    {
+        builder.OpenComponent<RouteViewManager>(0);
+        builder.AddAttribute(1, nameof(RouteViewManager.DefaultLayout), _pageLayoutType);
+        builder.AddAttribute(1, nameof(RouteViewManager.RouteData), _routeData);
+        builder.CloseComponent();
+    }
+    else
+    {
+        builder.OpenComponent<LayoutView>(0);
+        builder.AddAttribute(1, nameof(LayoutView.Layout), _pageLayoutType);
+        builder.AddAttribute(2, nameof(LayoutView.ChildContent), this.ChildContent);
+        builder.CloseComponent();
+    }
+};
+```
+
+## Switching the RouteView Without Routing
+
+Switching the RouteView without routing has several applications.  These are some I've used:
+
+1. Hide direct access to a page.  It can only be accessed within the application.
+2. Multipart forms/processes with a single entry point.  The state of the saved form/process dictates which form gets loaded.
+3. Context dependant forms or information.  Login/logout/signup is a good example.  The same Url but with a different routeviews loaded depending on the context.
+
+### ViewData
+
+The equivalent to `RouteData`.
+
+```csharp
+public class ViewData
+{
+    /// Gets the type of the View.
+    public Type ViewType { get; set; }
+
+    /// Gets the type of the page matching the route.
+    public Type LayoutType { get; set; }
+
+    /// Parameter values to add to the Route when created
+    public Dictionary<string, object> ViewParameters { get; private set; } = new Dictionary<string, object>();
+
+    /// Constructs an instance of <see cref="ViewData"/>.
+    public ViewData(Type viewType, Dictionary<string, object> viewValues = null)
+    {
+        if (viewType == null) throw new ArgumentNullException(nameof(viewType));
+        this.ViewType = viewType;
+        if (viewValues != null) this.ViewParameters = viewValues;
+    }
+}
+```
+
+All functionality is implemented in `RouteViewManager`.
+
+### RouteViewManager
+
+First some properties and fields. 
+```csharp
+/// The size of the History list used for Views.
+[Parameter] public int ViewHistorySize { get; set; } = 10;
+
+/// Gets and sets the view data.
+public ViewData ViewData
+{
+    get => this._ViewData;
+    protected set
+    {
+        this.AddViewToHistory(this._ViewData);
+        this._ViewData = value;
+    }
+}
+
+/// Property that stores the View History.  It's size is controlled by ViewHistorySize
+public SortedList<DateTime, ViewData> ViewHistory { get; private set; } = new SortedList<DateTime, ViewData>();
+
+/// Gets the last view data.
+public ViewData LastViewData
+{
+    get
+    {
+        var newest = ViewHistory.Max(item => item.Key);
+        if (newest != default) return ViewHistory[newest];
+        else return null;
+    }
+}
+
+/// Method to check if <param name="view"> is the current View
+public bool IsCurrentView(Type view) => this.ViewData?.ViewType == view;
+
+/// Boolean to check if we have a View set
+public bool HasView => this._ViewData?.ViewType != null;
+
+/// Internal ViewData used by the component
+private ViewData _ViewData { get; set; }
+```
+
+Next a set of `LoadViewAsync` methods to provide a variety of ways to load a new view.  The main method sets the internal `viewData` field and calls `Render` to re-render the component.
+
+```csharp
+// The main method
+public await Task LoadViewAsync(ViewData viewData = null)
+{
+    if (viewData != null) this.ViewData = viewData;
+    if (ViewData == null)
+    {
+        throw new InvalidOperationException($"The {nameof(RouteViewManager)} component requires a non-null value for the parameter {nameof(ViewData)}.");
+    }
+    await this.RenderAsync();
+}
+
+public async Task LoadViewAsync(Type viewtype)
+    => await this.LoadViewAsync(new ViewData(viewtype, new Dictionary<string, object>()));
+
+public async Task LoadViewAsync<TView>(Dictionary<string, object> data = null)
+    => await this.LoadViewAsync(new ViewData(typeof(TView), data));
+```
+
+We have already seen `_renderComponentWithParameters`.  With a valid `_ViewData` object, it renders the component using `_ViewData`.
+
+```csharp
+private RenderFragment _renderComponentWithParameters => builder =>
+{
+    Type componentType = null;
+    IReadOnlyDictionary<string, object> parameters = new Dictionary<string, object>();
+
+    if (_ViewData != null)
+    {
+        componentType = _ViewData.ViewType;
+        parameters = _ViewData.ViewParameters;
+    }
+    else if (RouteData != null)
+    {
+        componentType = RouteData.PageType;
+        parameters = RouteData.RouteValues;
+    }
+
+    if (componentType != null)
+    {
+        builder.OpenComponent(0, componentType);
+        foreach (var kvp in parameters)
         {
-            app.UseDeveloperExceptionPage();
+            builder.AddAttribute(1, kvp.Key, kvp.Value);
         }
-        else
-        {
-            app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-            app.UseHsts();
-        }
-
-        app.UseHttpsRedirection();
-        app.UseStaticFiles();
-
-        app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/wasm"), app1 =>
-        {
-            app1.UseBlazorFrameworkFiles("/wasm");
-            app1.UseRouting();
-            app1.UseEndpoints(endpoints =>
-            {
-                endpoints.MapFallbackToPage("/wasm/{*path:nonfile}", "/wasm");
-            });
-        });
-
-        app.UseRouting();
-
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-            endpoints.MapBlazorHub();
-            endpoints.MapRazorPages();
-            endpoints.MapFallbackToPage("/Server");
-        });
+        builder.CloseComponent();
     }
-}
-```
-
-## Run the Application
-
-The application should now run.  It will start in the Server context.  Switch to the WASM context via the link in the left menu.  You should see the the colour change as you switch between contexts.
-
-## Adding a DataService
-
-While the above configuation works, it needs some demo code to show how it handles more conventional data services.  We'll modify the solution to work with a very basic data services to show the DI and interface concepts that should be used.
-
-Add *Data* and *Services* folders to the *Blazor* project.
-
-### WeatherForecast.cs
-
-Add a `WeatherForecast` class to *Data*.
-
-```csharp
-public class WeatherForecast
-{
-    public DateTime Date { get; set; }
-    public int TemperatureC { get; set; }
-    public string Summary { get; set; }
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
-```
-
-### IWeatherForecastService.cs
-
-Add a `IWeatherForecastService` interface to *Services*.
-
-```csharp
-    public interface IWeatherForecastService
+    else
     {
-        public Task<List<WeatherForecast>> GetRecordsAsync();
+        builder.OpenElement(0, "div");
+        builder.AddContent(1, "No Route or View Configured to Display");
+        builder.CloseElement();
     }
+};
 ```
 
-### WeatherForecastServerService.cs
+### RouteNavLink
 
-Add a `WeatherForecastServerService` class to *Services*.  Normally this would interface to a database, but here we're just creating a set of dummy records.
+`RouteNavLink` is an enhanced `NavLink` control.  The code is a direct copy with a small amount of added code.  It doesn't inherit because `NavLink` is a black box.  It ensures navigation is through the NavigationManager rather than Html anchor links and provides direct access to RouteView loading.  The code is in the Repo - it's too long to reproduce here.
 
-```csharp
-public class WeatherForecastServerService : IWeatherForecastService
-{
-    private static readonly string[] Summaries = new[]
-    {
-        "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-    };
+## Example Pages
 
-    private List<WeatherForecast> records = new List<WeatherForecast>();
+The application has RouteViews/Pages to demonstrate the new components.  You can review the source code in the Repo.  You can also see the pages on the Demo Site.
 
-    public WeatherForecastServerService()
-        => this.GetForecasts();
+![EditForm](https://shauncurtis.github.io/siteimages/Articles/App/DemoSite.png)
 
-    public void GetForecasts()
-    {
-        var rng = new Random();
-        records = Enumerable.Range(1, 10).Select(index => new WeatherForecast
-        {
-            Date = DateTime.Now.AddDays(index),
-            TemperatureC = rng.Next(-20, 55),
-            Summary = Summaries[rng.Next(Summaries.Length)]
-        }).ToList();
-    }
+### RouteViewer.razor
 
-    public Task<List<WeatherForecast>> GetRecordsAsync()
-        => Task.FromResult(this.records);
-}
-```
+[https://cec-blazor-database.azurewebsites.net/routeviewer](https://cec-blazor-database.azurewebsites.net/routeviewer)
 
-### WeatherForecastAPIService.cs
+This demonstrates:
 
-Add a `WeatherForecastAPIService` class to *Services*.
+1. Adding routes dynamically to the Application.  Choose a page to add a custom route for, add a route name and click *Go To Route*.
+2. Loading a `RouteView` without navigation.  Choose a Page and click on *Go To View*.  The page is displayed, but the Url doesn't change!  Confusing, but it demos the principle.
+3. Changing the default Layout.  Click on *Red Layout* and the layout will change to red.  Basic FetchData has a specific layout defined so it will use the original layout.  Click on *Normal Layout* to change back.
 
-```csharp
-public class WeatherForecastAPIService : IWeatherForecastService
-{
-    protected HttpClient HttpClient { get; set; }
+### Form.Razor
 
-    public WeatherForecastAPIService(HttpClient httpClient)
-        => this.HttpClient = httpClient;
+[https://cec-blazor-database.azurewebsites.net/form](https://cec-blazor-database.azurewebsites.net/form)
 
-    public async Task<List<WeatherForecast>> GetRecordsAsync()
-        => await this.HttpClient.GetFromJsonAsync<List<WeatherForecast>>($"/api/weatherforecast/list");
-}
-```
+This demonstrates a multipart form.  There are four forms:
+1. *Form.Razor* the base and first form.
+2.  *Form2.Razor* the second form - inherits from the first form.
+3.  *Form3.Razor* the third form - inherits from the first form.
+4.  *Form4.Razor* the result form - inherits from the first form.
 
-### WeatherForecastController.cs
-
-Finally add a `WeatherForecastController` class to the *Blazor.Web* project in a *Controller* folder.
-
-```csharp
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Blazor.Data;
-using Microsoft.AspNetCore.Mvc;
-using MVC = Microsoft.AspNetCore.Mvc;
-using Blazor.Services;
-
-namespace Blazor.Web.APIControllers
-{
-    [ApiController]
-    public class WeatherForecastController : ControllerBase
-    {
-        protected IWeatherForecastService DataService { get; set; }
-
-        public WeatherForecastController(IWeatherForecastService dataService)
-            => this.DataService = dataService;
-
-        [MVC.Route("/api/weatherforecast/list")]
-        [HttpGet]
-        public async Task<List<WeatherForecast>> GetList() => await DataService.GetRecordsAsync();
-    }
-}
-```
-
-### Blazor Project Program.cs
-
-Add the API service to *Program.cs* in the *Blazor* project, declaring it through it's `IWeatherForecastService`.
-
-```csharp
-public class Program
-{
-    public static async Task Main(string[] args)
-    {
-        var builder = WebAssemblyHostBuilder.CreateDefault(args);
-        builder.RootComponents.Add<App>("#app");
-
-        builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-        builder.Services.AddScoped<IWeatherForecastService, WeatherForecastAPIService>();
-
-        await builder.Build().RunAsync();
-    }
-}
-```
-
-### Blazor.Web Startup.cs
-
-Add the server service to *Startup.cs* in the *Blazor.Web* project, again through it's `IWeatherForecastService`.
-
-```csharp
-public void ConfigureServices(IServiceCollection services)
-{
-    services.AddRazorPages();
-    services.AddServerSideBlazor();
-    services.AddScoped<IWeatherForecastService, WeatherForecastServerService>();
-    .....
-}
-```
-
-## Building and Run the project
-
-The solution should now build and run.
-
-![Blazor Project](https://shauncurtis.github.io/siteimages/Articles/AllinOne/Blazor-Project.png)
-
-![Blazor.Web Project](https://shauncurtis.github.io/siteimages/Articles/AllinOne/Blazor-Web-Project.png)
-
-## How Does It Work?
-
-Fundimentally, the difference between a Blazor Server and a Blazor WASM Application is the context in which it's run.  In the solution all SPA code is built in the Web Assembly project, and used by both the WASM and Server contexts.  There's no "shared" code library code, because it's exactly the same front end code with the same entrypoint - App.razor.  The different between the two contexts, is the provider of the backend services.
-
-The web assembly project is declared `<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">`.  It builds both a standard *Blazor.dll* file and the WASM specific code including the Web Assembly "boot configuration file" *blazor.boot.json*.
-
-In the web assembly context, the initial page loads *blazor.webassembly.js*.  This loads *blazor.boot.json* which tells *blazor.webassembly.js* how to "boot" the Web assembly code in the browser.  It runs `Program` which builds the `WebAssemblyHost`, loads the defined services, and starts the `Renderer` which replaces the *app* html element with the root component specified in `Program`.  This loads the router, which reads the Url, gets the appropiate component, loads it into the specified layout, and begins the rendering process.  SPA up and running.
-
-In the Server context, the server side code picks up the component reference in the initial load page and statically renders it.  It passes the rendered page to the client.  This loads and runs `blazor.server.js`, which calls back to the server SignalR Hub and gets the dynamically rendered app root component.  SPA up and running.  The services container and renderer are in the Blazor Hub - started by calling `services.AddServerSideBlazor()` in Startup when the web server starts.
-
-The data services we implemented demonstrate Dependancy injection and interfaces.  The UI components - in our case `FetchData` consume the `IWeatherForcastService` service registered in Services.  In the WASM context, the services container starts `WeatherForecastAPIService`, while in the Server context, the services container starts `WeatherForecastServerService`.  Two different services, conforming to the same interface and consumed by the UI components using the interface.  The UI components don't care which service they consume, it just needs to implement `IWeatherForcastService`.
+The forms link to data in the WeathForecastService which maintains the form state.  Try leaving the form part way through and then returning.  State is preserved while the SPA session is maintained.
 
 ## Wrap Up
 
-Hopefully this article has provided an insight into how Blazor SPAs work and the real differences between a Server and WASM Blazor SPA.
+Hopefully I've demonstrated the principles you can use to build the extra functionality into the core Blazor framework.  None of the components are finished articles.  Use them and develop them as you wish.   
 
-If you are reading this well into the future, the most recent version of this article will be [here](https://shauncurtis.github.io/articles/Blazor-AllinOne.html).
+If you're reading this article a long time into the future chack [here](https://shauncurtis.github.io/articles/A-Flexible-App.html) for the latest version 
+
