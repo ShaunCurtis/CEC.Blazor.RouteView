@@ -1,6 +1,4 @@
-﻿# Blazor AllinOne 
-
-# Adding Dynamic Routing, Layouts and RouteViews to the Blazor App Component
+﻿# Adding Dynamic Routing, Layouts and RouteViews to the Blazor App Component
 
 > Publish Date: 2021-04-13  - Last Updated: 2021-04-13
 
