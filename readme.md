@@ -1,6 +1,6 @@
 ﻿# Adding Dynamic Routing, Layouts and RouteViews to the Blazor App Component
 
-> Publish Date: 2021-04-13  - Last Updated: 2021-04-13
+> Publish Date: 2021-04-13  - Last Updated: 2024-08-06
 
 ## Overview
 
@@ -33,8 +33,8 @@ In the Web Assembly context the SPA startup page contains an element placeholder
 ``` 
 The code line that defines the replacement in `Program` is:
 ```csharp
-    // Replace the app id element with the component App
-    builder.RootComponents.Add<App>("#app");
+// Replace the app id element with the component App
+builder.RootComponents.Add<App>("#app");
 ```
 
 In the Server context `App` is declared directly as a Razor component in the Razor markup.  It gets pre-rendered by the server and then updated by the Blazor Server client in the browser. 
@@ -43,7 +43,7 @@ In the Server context `App` is declared directly as a Razor component in the Raz
 ...
 <body>
     <component type="typeof(Blazor.App)" render-mode="ServerPrerendered" />
-...
+    ...
 </body>
 ```
 
@@ -77,7 +77,7 @@ The `App` code is shown below.  It's a standard Razor component, inheriting from
 ```csharp
 public class RouteViewService 
 {
-  ....
+    ...
 }
 ``` 
 
@@ -218,7 +218,7 @@ Out-of-the-box, Blazor layouts are defined and fixed at compile time.  `@Layout`
 [Microsoft.AspNetCore.Components.RouteAttribute("/")]
 [Microsoft.AspNetCore.Components.RouteAttribute("/index")]
 public partial class Index : Microsoft.AspNetCore.Components.ComponentBase
-....
+...
 ```
 
 To change Layouts dynamically we use `RouteViewService` to store the layout. It can be set from any component that injects the service.
@@ -227,7 +227,7 @@ To change Layouts dynamically we use `RouteViewService` to store the layout. It 
 public class RouteViewService
 {
     public Type Layout { get; set; }
-    ....
+    ...
 }
 ```
 
@@ -266,7 +266,7 @@ This is Razor talk, and gets transposed into the following in the C# class when 
 [Microsoft.AspNetCore.Components.RouteAttribute("/")]
 [Microsoft.AspNetCore.Components.RouteAttribute("/index")]
 public partial class Index : Microsoft.AspNetCore.Components.ComponentBase
-.....
+...
 ```
 
 When `Router` initializes it trawls any assemblies provided and builds a route dictionary of component/route pairs.
@@ -293,81 +293,95 @@ If we can avoid causing a hard navigation events in `Router`, we can add a compo
 `CustomRouteData` holds the information needed to make routing decisions.  The class looks like this with inline detailed explanations.  
 
 ```csharp
-    public class CustomRouteData
+public class CustomRouteData
+{
+    /// <summary>
+    /// The standard RouteData.
+    public RouteData RouteData { get; private set; }
+
+    /// <summary>
+    /// The PageType to load on a match.
+    /// </summary>
+    public Type PageType { get; set; }
+
+    /// <summary>
+    /// The Regex String to define the route.
+    /// </summary>
+    public string RouteMatch { get; set; }
+
+    /// <summary>
+    /// Parameter values to add to the Route when created name/defaultvalue.
+    /// </summary>
+    public SortedDictionary<string, object> ComponentParameters { get; set; } = new SortedDictionary<string, object>();
+
+    /// <summary>
+    /// Method to check if we have a route match.
+    /// </summary>
+    public bool IsMatch(string url)
     {
-        /// The standard RouteData.
-        public RouteData RouteData { get; private set; }
-        /// The PageType to load on a match 
-        public Type PageType { get; set; }
-        /// The Regex String to define the route
-        public string RouteMatch { get; set; }
-        /// Parameter values to add to the Route when created name/defaultvalue
-        public SortedDictionary<string, object> ComponentParameters { get; set; } = new SortedDictionary<string, object>();
-
-        /// Method to check if we have a route match
-        public bool IsMatch(string url)
+        // get the match
+        var match = Regex.Match(url, this.RouteMatch,RegexOptions.IgnoreCase);
+        if (match.Success)
         {
-            // get the match
-            var match = Regex.Match(url, this.RouteMatch,RegexOptions.IgnoreCase);
-            if (match.Success)
+            // create new dictionary object to add to the RouteData
+            var dict = new Dictionary<string, object>();
+            //  check we have the same or fewer groups as parameters to map the to
+            if (match.Groups.Count >= ComponentParameters.Count)
             {
-                // create new dictionary object to add to the RouteData
-                var dict = new Dictionary<string, object>();
-                //  check we have the same or fewer groups as parameters to map the to
-                if (match.Groups.Count >= ComponentParameters.Count)
+                var i = 1;
+                // iterate through the parameters and add the next match
+                foreach (var pars in ComponentParameters)
                 {
-                    var i = 1;
-                    // iterate through the parameters and add the next match
-                    foreach (var pars in ComponentParameters)
-                    {
-                        string matchValue = string.Empty;
-                        if (i < match.Groups.Count)
-                            matchValue = match.Groups[i].Value;
-                        //  Use a StypeSwitch object to do the Type Matching and create the dictionary pair 
-                        var ts = new TypeSwitch()
-                            .Case((int x) =>
-                            {
-                                if (int.TryParse(matchValue, out int value))
-                                    dict.Add(pars.Key, value);
-                                else
-                                    dict.Add(pars.Key, pars.Value);
-                            })
-                            .Case((float x) =>
-                            {
-                                if (float.TryParse(matchValue, out float value))
-                                    dict.Add(pars.Key, value);
-                                else
-                                    dict.Add(pars.Key, pars.Value);
-                            })
-                            .Case((decimal x) =>
-                            {
-                                if (decimal.TryParse(matchValue, out decimal value))
-                                    dict.Add(pars.Key, value);
-                                else
-                                    dict.Add(pars.Key, pars.Value);
-                            })
-                            .Case((string x) =>
-                            {
-                                dict.Add(pars.Key, matchValue);
-                            });
+                    string matchValue = string.Empty;
+                    if (i < match.Groups.Count)
+                        matchValue = match.Groups[i].Value;
+                    //  Use a StypeSwitch object to do the Type Matching and create the dictionary pair 
+                    var ts = new TypeSwitch()
+                        .Case((int x) =>
+                        {
+                            if (int.TryParse(matchValue, out int value))
+                                dict.Add(pars.Key, value);
+                            else
+                                dict.Add(pars.Key, pars.Value);
+                        })
+                        .Case((float x) =>
+                        {
+                            if (float.TryParse(matchValue, out float value))
+                                dict.Add(pars.Key, value);
+                            else
+                                dict.Add(pars.Key, pars.Value);
+                        })
+                        .Case((decimal x) =>
+                        {
+                            if (decimal.TryParse(matchValue, out decimal value))
+                                dict.Add(pars.Key, value);
+                            else
+                                dict.Add(pars.Key, pars.Value);
+                        })
+                        .Case((string x) =>
+                        {
+                            dict.Add(pars.Key, matchValue);
+                        });
 
-                        ts.Switch(pars.Value);
-                        i++;
-                    }
+                    ts.Switch(pars.Value);
+                    i++;
                 }
-                // create a new RouteData object and assign it to the RouteData property. 
-                this.RouteData = new RouteData(this.PageType, dict);
             }
-            return match.Success;
+            // create a new RouteData object and assign it to the RouteData property. 
+            this.RouteData = new RouteData(this.PageType, dict);
         }
-
-        /// Method to check if we have a route match and return the RouteData
-        public bool IsMatch(string url, out RouteData routeData)
-        {
-            routeData = this.RouteData;
-            return IsMatch(url);
-        }
+        return match.Success;
     }
+
+    /// <summary>
+    /// Method to check if we have a route match and return the RouteData.
+    /// </summary>
+    public bool IsMatch(string url, out RouteData routeData)
+    {
+        routeData = this.RouteData;
+        return IsMatch(url);
+    }
+}
 ```
 
 For those interested, `TypeSwitch` looks like this (thanks to *cdiggins* on StackOverflow for the code):
@@ -376,12 +390,12 @@ For those interested, `TypeSwitch` looks like this (thanks to *cdiggins* on Stac
 /// =================================
 /// Author: stackoverflow: cdiggins
 /// ==================================
-    public class TypeSwitch
-    {
-        public TypeSwitch Case<T>(Action<T> action) { matches.Add(typeof(T), (x) => action((T)x)); return this; }
-        private Dictionary<Type, Action<object>> matches = new Dictionary<Type, Action<object>>();
-        public void Switch(object x) { matches[x.GetType()](x); }
-    }
+public class TypeSwitch
+{
+    public TypeSwitch Case<T>(Action<T> action) { matches.Add(typeof(T), (x) => action((T)x)); return this; }
+    private Dictionary<Type, Action<object>> matches = new Dictionary<Type, Action<object>>();
+    public void Switch(object x) { matches[x.GetType()](x); }
+}
 ```
 
 ## Updates to the RouteViewService
@@ -427,7 +441,9 @@ public Task SetParametersAsync(ParameterView parameters)
 `_ViewFragment` either renders a `RouteViewManager`, setting `RouteData` if it finds a custom route, or the contents of `RouteNotFoundManager`. 
   
 ```csharp
+/// <summary>
 /// Layouted Render Fragment
+/// </summary>
 private RenderFragment _ViewFragment => builder =>
 {
     // check if we have a RouteData object and if so load the RouteViewManager, otherwise the ChildContent
@@ -488,10 +504,14 @@ All functionality is implemented in `RouteViewManager`.
 
 First some properties and fields. 
 ```csharp
+/// <summary>
 /// The size of the History list used for Views.
+/// </summary>
 [Parameter] public int ViewHistorySize { get; set; } = 10;
 
+/// <summary>
 /// Gets and sets the view data.
+/// </summary>
 public ViewData ViewData
 {
     get => this._ViewData;
@@ -502,10 +522,14 @@ public ViewData ViewData
     }
 }
 
+/// <summary>
 /// Property that stores the View History.  It's size is controlled by ViewHistorySize
+/// </summary>
 public SortedList<DateTime, ViewData> ViewHistory { get; private set; } = new SortedList<DateTime, ViewData>();
 
+/// <summary>
 /// Gets the last view data.
+/// </summary>
 public ViewData LastViewData
 {
     get
@@ -516,20 +540,28 @@ public ViewData LastViewData
     }
 }
 
-/// Method to check if <param name="view"> is the current View
+/// <summary>
+/// Method to check if <param name="view"> is the current View.
+/// </summary>
 public bool IsCurrentView(Type view) => this.ViewData?.ViewType == view;
 
-/// Boolean to check if we have a View set
+/// <summary>
+/// Boolean to check if we have a View set.
+/// </summary>
 public bool HasView => this._ViewData?.ViewType != null;
 
-/// Internal ViewData used by the component
+/// <summary>
+/// Internal ViewData used by the component.
+/// </summary>
 private ViewData _ViewData { get; set; }
 ```
 
 Next a set of `LoadViewAsync` methods to provide a variety of ways to load a new view.  The main method sets the internal `viewData` field and calls `Render` to re-render the component.
 
 ```csharp
-// The main method
+/// <summary>
+/// The main method
+/// </summary>
 public await Task LoadViewAsync(ViewData viewData = null)
 {
     if (viewData != null) this.ViewData = viewData;
@@ -620,5 +652,4 @@ The forms link to data in the WeathForecastService which maintains the form stat
 
 Hopefully I've demonstrated the principles you can use to build the extra functionality into the core Blazor framework.  None of the components are finished articles.  Use them and develop them as you wish.   
 
-If you're reading this article a long time into the future chack [here](https://shauncurtis.github.io/articles/A-Flexible-App.html) for the latest version 
-
+If you're reading this article a long time into the future chack [here](https://shauncurtis.github.io/articles/A-Flexible-App.html) for the latest version.
